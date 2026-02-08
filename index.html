@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tahfidz Santri</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; padding-bottom: 50px; }
+        .card { border-radius: 15px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-primary { background-color: #4285f4; border: none; }
+        .loading { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4">
+    <h3 class="text-center mb-4">Progres Hafalan Santri</h3>
+
+    <div class="card p-4 mb-4">
+        <form id="progresForm">
+            <div class="mb-3">
+                <label class="form-label">Nama Santri</label>
+                <input type="text" id="nama" class="form-control" required placeholder="Masukkan nama...">
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label class="form-label">Surah</label>
+                    <input type="text" id="surah" class="form-control" placeholder="Contoh: Al-Baqarah">
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label">Halaman</label>
+                    <input type="number" id="halaman" class="form-control" placeholder="Hal">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Keterangan</label>
+                <textarea id="keterangan" class="form-control" rows="2" placeholder="Lancar/Murajaah..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2">Simpan Data</button>
+        </form>
+    </div>
+
+    <div class="card p-3">
+        <h5>Riwayat Terakhir</h5>
+        <div id="dataContent" class="table-responsive">
+            <p class="text-muted text-center">Memuat data...</p>
+        </div>
+    </div>
+</div>
+
+<div id="loader" class="loading"><div class="spinner-border text-primary"></div></div>
+
+<script>
+    // --- KONFIGURASI ---
+    const SCRIPT_URL = "URL_WEB_APP_ANDA_DISINI"; 
+
+    const form = document.getElementById('progresForm');
+    const loader = document.getElementById('loader');
+
+    // Ambil Data Saat Halaman Dibuka
+    window.onload = loadData;
+
+    function loadData() {
+        fetch(`${SCRIPT_URL}?action=getAll`)
+        .then(res => res.json())
+        .then(data => {
+            let html = `<table class="table small mt-2">
+                <thead><tr><th>Nama</th><th>Hafalan</th><th>Tgl</th></tr></thead>
+                <tbody>`;
+            data.forEach(item => {
+                html += `<tr>
+                    <td><b>${item.nama}</b></td>
+                    <td>${item.surah} (Hal ${item.halaman})</td>
+                    <td>${item.tanggal}</td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+            document.getElementById('dataContent').innerHTML = html;
+        });
+    }
+
+    form.onsubmit = (e) => {
+        e.preventDefault();
+        loader.style.display = 'block';
+
+        const payload = {
+            action: 'add',
+            nama: document.getElementById('nama').value,
+            surah: document.getElementById('surah').value,
+            halaman: document.getElementById('halaman').value,
+            keterangan: document.getElementById('keterangan').value
+        };
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(res => {
+            loader.style.display = 'none';
+            if(res.success) {
+                alert('Data Berhasil Disimpan!');
+                form.reset();
+                loadData();
+            }
+        })
+        .catch(err => {
+            loader.style.display = 'none';
+            alert('Error: ' + err);
+        });
+    };
+</script>
+</body>
+</html>
